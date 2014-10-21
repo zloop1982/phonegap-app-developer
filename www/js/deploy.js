@@ -145,13 +145,12 @@
             0,
             function(fileSystem) {
                 var fileTransfer = new FileTransfer();
-                var uri = encodeURI(options.address + '/__api__/zip');
                 var timeStamp = Math.round(+new Date()/1000);
                 var downloadPath = fileSystem.root.toURL() + 'app' + timeStamp + '.zip';
                 var dirPath =  fileSystem.root.toURL() + 'app' + timeStamp;
 
                 fileTransfer.download(
-                    uri,
+                    options.address,
                     downloadPath,
                     function(entry) {
                         console.log("download complete: " + entry.toURL());

@@ -183,6 +183,10 @@
                         {
                             "xml": "<feature name=\"ADBMobile_PhoneGap\"><param name=\"ios-package\" value=\"ADBMobile_PhoneGap\" /></feature>",
                             "count": 1
+                        },
+                        {
+                            "xml": "<feature name=\"PhonegapBuildOauth\"><param name=\"ios-package\" value=\"CDVPhonegapBuildOauth\" /></feature>",
+                            "count": 1
                         }
                     ],
                     "/widget": [
@@ -257,6 +261,9 @@
             "PACKAGE_NAME": "com.adobe.phonegap.app"
         },
         "org.chromium.zip": {
+            "PACKAGE_NAME": "com.adobe.phonegap.app"
+        },
+        "com.phonegap.build.oauth": {
             "PACKAGE_NAME": "com.adobe.phonegap.app"
         }
     },

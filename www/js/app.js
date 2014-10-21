@@ -41,6 +41,8 @@ $().ready(function() {
         $address.attr('currentValue', '');
     });
 
+    $('.pgb').on('click', login);
+
     // Work around CSS browser issues.
     supportBrowserQuirks();
 });
@@ -153,7 +155,7 @@ function onBuildSubmitSuccess() {
 
         setTimeout( function() {
             window.phonegap.app.downloadZip({
-                address: getAddress(),
+                address: encodeURI(getAddress() + '/__api__/zip'),
                 onDownloadError: function(e) {
                     onBuildSubmitError('Upgrade CLI');
                     setTimeout(function() {
@@ -232,3 +234,22 @@ function supportBrowserQuirks() {
 }
 
 })();
+
+/*---------------------------------------------------
+    Phonegap Build - Login
+---------------------------------------------------*/
+
+function login(e) {
+
+    e.preventDefault();
+
+    PhonegapBuildOauth.login("b3e5cfc36aa66587b24f", function(a) {
+        window.sessionStorage.setItem("access_token", a.access_token);
+        window.location.href = "pgb.html";
+    }, function(a) {
+        console.log(a.error);
+        alert("authorization failed");
+    });
+
+}
+

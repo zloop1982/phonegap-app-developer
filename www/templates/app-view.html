@@ -1,0 +1,46 @@
+<ul class="edgetoedge">
+	<li>{{ title }}</li>
+	<li>Description<small>{{ description }}</small></li>
+	<li>Phonegap<small>{{ phonegap_version }}</small></li>
+	<li>Version<small>{{ version }}</small></li>
+	{{ #repo }}
+	<li>Repo<small><a class='link' href='#'>{{ repo }}</a></small></li>
+	{{ /repo }}
+</ul>
+
+<div style="padding: 10px 0px">
+<a href="#" class='install blueButton' data-id='{{ id }}'>Install</a><br/>
+<a href="#" class='run blueButton' data-id='{{ id }}'>Run</a>
+</div>
+
+<ul class="edgetoedge">
+	<li><em>This build of the Phonegap Developer App</em></li>
+	{{#pg_version_mismatch}}
+		<li><em>- is using a different version of Phonegap ({{pg_version}}) from this Phonegap Build App</em></li>
+	{{/pg_version_mismatch}}	
+	{{#plugin_missing}}
+		<li><em>- is missing at least one plugin used by this Phonegap Build App</em></li>
+	{{/plugin_missing}}
+	{{#plugin_mismatch}}
+		<li><em>- has at least one plugin mismatch with this Phonegap Build App</em></li>
+	{{/plugin_mismatch}}
+	{{^plugin_missing}}{{^plugin_mismatch}}
+		<li class="arrow"><em>- contains all plugins required by this Phonegap Build App</em></li>
+	{{/plugin_mismatch}}{{/plugin_missing}}
+	<li><a href="#" class="show-details">Show plugin details</a></li>
+</ul>
+
+<ul class="edgetoedge app-plugins" style="display:none">
+	{{ #plugins }}
+	<li {{ #mismatch }} class='mismatch' {{ /mismatch }}>
+		<em>{{ name }}</em>
+		<small>{{ version }}</small>
+		<!--
+		<td>{{ available_version }}</td>
+		-->
+	</li>
+	{{ /plugins }}
+	{{ ^plugins }}
+	<li>App requires no plugins</li>
+	{{ /plugins }}
+</ul>
