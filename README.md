@@ -1,4 +1,4 @@
-# PhoneGap Developer App [![bitHound Score][bithound-img]][bithound-url]
+# PhoneGap Developer App [![Build Status][travis-ci-img]][travis-ci-url] [![bitHound Score][bithound-img]][bithound-url]
 
 > Available in an app store near you!
 
@@ -9,7 +9,7 @@ using the PhoneGap framework. After installing the PhoneGap Developer app you
 can connect to your PhoneGap desktop app to instantly view and test your project
 on the device.
 
-For more information, see [app.phonegap.com][3].
+For more information, see [Developer App Reference Guide][3] on the PhoneGap Docs.
 
 ## Download
 
@@ -19,22 +19,56 @@ For more information, see [app.phonegap.com][3].
 
 ## Documentation
 
-- [FAQ](https://github.com/phonegap/phonegap-app-developer/blob/master/FAQ.md)
+- [Developer App Reference Guide](http://docs.phonegap.com/references/developer-app/)
+- [FAQ/Troubleshooting](http://docs.phonegap.com/references/developer-app/troubleshoot-faq/)
+- [Unable to Connect or Download from Server](http://docs.phonegap.com/references/developer-app/troubleshoot-faq/#phonegap-developer-app-is-unable-to-download-from-the-server)
 
 ## Development
 
-### Compile and Run the Application
+### Setup
 
+The repository includes everything required to compile the app. You can get
+setup by:
+
+    $ git clone https://github.com/phonegap/phonegap-app-developer.git
+    $ cd phonegap-app-developer/
     $ npm install
-    $ npm install -g phonegap@3.4.0-0.20.0
-    $ phonegap run ios
-    $ phonegap run android
-    $ phonegap run wp8
+
+### Compile and Run
+
+The app bundles the `phonegap` npm module as a dependency. This means that
+there is no need for a global installation of `phonegap` or `cordova`.
+By editing the `package.json`, you can specify the exact version of `phonegap`
+to compile the project.
+
+Since a global install of the `phonegap` module is not required, we use
+`npm run` scripts to compile and run the application. This allows the app's
+`platforms/` and `plugins/` directories to be removed and rebuilt each time,
+ensuring a consistent build using the correct PhoneGap, Cordova, platform,
+and plugin versions.
+
+The command structure is:
+
+    $ npm run phonegap -- <command> [args]
+
+For example, you can check the version of `phonegap`:
+
+    $ npm run phonegap -- --version
+
+You can compile and run iOS or Android:
+
+    $ npm run phonegap -- run ios
+    $ npm run phonegap -- run android
 
 For developers wishing to use the platform SDKs (Xcode, Eclipse, Visual Studio),
 please build once with the CLI to correctly populate the platform assets:
 
-    $ phonegap build <platform>
+    $ npm run phonegap -- build <platform>
+
+Due to a Windows npm bug, the `--` does not work. Therefore we have created
+run script that will build Windows Phone 8, so it can run in Visual Studio.
+
+    $ npm run phonegap-wp8
 
 ### Running the Tests
 
@@ -49,9 +83,13 @@ to add functional tests for the app logic.
 
 You can run the local tests with:
 
-    $ phonegap run android --test
-    $ phonegap run ios --test
-    $ phonegap run wp8 --test
+    $ npm run phonegap -- run android --test
+    $ npm run phonegap -- run ios --test
+
+Again for Windows Phone, we have a run script that will build the app so it can run in
+Visual Studio.
+
+    $ npm run phonegap-wp8-test
 
 #### Test the Served Application
 
@@ -77,17 +115,64 @@ On your first run of the tests, you may see some modified files. This is expecte
 because the test runner invoked by `--test` modifies certain files to support
 our app's configuration.
 
-### Commits, Tags, and Releases
+### Adding Custom Plugins
+
+If you're a developer interested in creating your own custom build of the
+PhoneGap Developer App, then this section is for you!
+
+Since the PhoneGap Developer app bundles `phonegap` as a npm dependency and
+treats the `platforms/` and `plugins/` as artifacts, you'll find that it is very
+easy to add your own plugins and alter other aspects of the app.
+
+You may visit the [PhoneGap docs](http://docs.phonegap.com/references/developer-app/custom-build/ios/) for a more in-depth guide or follow the steps below.
+
+First, [Setup](#user-content-setup) the project on your local system.
+
+Second, edit the `config.xml` to add a custom plugin, change a preference, or
+configure the app's name. You should also change the app's id to your own
+unique app bundle id:
+
+    <?xml version='1.0' encoding='utf-8'?>
+    <widget id="org.mycompany.phonegap.app" version="1.6.2" xmlns="http://www.w3.org/ns/widgets" xmlns:gap="http://phonegap.com/ns/1.0">
+
+
+Third, follow the [Compile and Run](#user-content-compile-and-run) section to
+get the app onto your device.
+
+If you run into any problems, feel free to [submit an issue](https://github.com/phonegap/phonegap-app-developer/issues).
+
+### Releases
+
+Releases are also generated using the npm scripts:
+
+    $ npm run release-android
+    $ npm run release-ios
+    $ npm run release-wp
+
+In order to properly code-sign Android and iOS, you must setup the signing key.
+This is accomplished by cloning the signing key repository and sym-linking each
+platform directory with the PhoneGap Developer App repository:
+
+    # in your development directory
+    $ git clone https://github.com/phonegap/phonegap-app-developer-keys.git
+
+    $ cd path/to/phonegap-app-developer/
+    $ ln -s /path/to/phonegap-app-developer-keys/keys/ios resources/signing/ios
+    $ ln -s /path/to/phonegap-app-developer-keys/keys/android resources/signing/android
+
+### Contributing, Commits, and Tags
 
 See the [CONTRIBUTING.md][6] file for details.
 
 [1]: https://play.google.com/store/apps/details?id=com.adobe.phonegap.app
 [2]: https://itunes.apple.com/app/id843536693
-[3]: http://app.phonegap.com
+[3]: http://docs.phonegap.com/references/developer-app/
 [4]: http://github.com/phonegap/connect-phonegap
 [5]: http://github.com/phonegap/phonegap-cli
 [6]: https://github.com/phonegap/phonegap-app-developer/blob/master/CONTRIBUTING.md
 [7]: http://www.windowsphone.com/en-us/store/app/phonegap-developer/5c6a2d1e-4fad-4bf8-aaf7-71380cc84fe3
+[travis-ci-img]: https://travis-ci.org/phonegap/phonegap-app-developer.svg?branch=master
+[travis-ci-url]: http://travis-ci.org/phonegap/phonegap-app-developer
 [bithound-img]: https://www.bithound.io/github/phonegap/phonegap-app-developer/badges/score.svg
 [bithound-url]: https://www.bithound.io/github/phonegap/phonegap-app-developer
 

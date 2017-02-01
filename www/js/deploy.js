@@ -27,7 +27,7 @@
 
             // load defaults
             config.address = config.address || '127.0.0.1:3000';
-
+            config.optIn = config.optIn || false;
             callback(config);
         });
     };
@@ -140,12 +140,22 @@
      */
 
     window.phonegap.app.downloadZip = function(options) {
-        var uri = encodeURI(options.address + '/__api__/appzip');
-        var sync = ContentSync.sync({ src: uri, id: 'phonegapdevapp', type: 'replace', copyCordovaAssets: true });
-
-        sync.on('complete', function(data) {
-            window.location.href = data.localPath + '/www/index.html';
-        });
+        var uri;
+        var sync;
+        var theHeaders = options.headers;
+        if(options.update === true) {
+            uri = encodeURI(options.address + '/__api__/update');
+            sync = ContentSync.sync({ src: uri, id: 'phonegapdevapp', type: 'merge', copyCordovaAssets: false, headers: theHeaders });
+            sync.on('complete', function(data) {
+                window.location.reload();
+            });
+        } else {
+            uri = encodeURI(options.address + '/__api__/appzip');
+            sync = ContentSync.sync({ src: uri, id: 'phonegapdevapp', type: 'replace', copyCordovaAssets: true, headers: theHeaders });
+            sync.on('complete', function(data) {
+                window.location.href = data.localPath + '/www/index.html';
+            });
+        }
 
         sync.on('progress', function(data) {
             if(options.onProgress) {
@@ -160,6 +170,19 @@
                 }, 10);
             }
             console.log("download error " + e);
+        });
+
+        document.addEventListener('cancelSync', function(e) {
+            sync.cancel();
+        });
+
+        sync.on('cancel', function(e) {
+            if (options.onCancel) {
+                setTimeout(function() {
+                    options.onCancel(e);
+                }, 10);
+            }
+            console.log("download cancelled by user");
         });
     };
 

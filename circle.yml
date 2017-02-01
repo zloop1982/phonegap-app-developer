@@ -1,0 +1,19 @@
+machine:
+  node:
+    version: 4.0.0
+
+dependencies:
+  pre:
+    - echo y | android update sdk --no-ui --filter "extra"
+
+general:
+  artifacts:
+    - "/home/ubuntu/phonegap-app-developer/platforms/android/build/outputs/apk/"
+
+deployment:
+  production:
+    branch: [continuous-integration, dev]
+    commands:
+      - pip install awscli
+      - bash resources/circle-ci/android/aws-upload.sh
+      - node ./resources/script/hockey-app.js $HOCKEY_APP_TOKEN $HOCKEY_APP_ANDROID_ID $CIRCLE_SHA1

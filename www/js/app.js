@@ -41,6 +41,12 @@ $().ready(function() {
         $address.attr('currentValue', '');
     });
 
+    // Allow user to opt in/out of analytics
+    $('#analytic-checkbox').on('change', function(data) {
+        window.phonegap.app.analytic.setPermission(config, $('#analytic-checkbox').prop('checked'));
+        console.log(window.phonegap.app.analytic.getPermissionStatus(config));
+    });
+
     // Work around CSS browser issues.
     supportBrowserQuirks();
 });
@@ -55,10 +61,16 @@ $(document).on('deviceready', function() {
         navigator.splashscreen.hide();
         $('.footer').removeClass('faded');
 
+        // %HOCKEYAPP
+
         // Load configuration
         window.phonegap.app.config.load(function(data) {
             // store the config data
             config = data;
+
+            // load analytics permission value
+            $('#analytic-checkbox').prop('checked', window.phonegap.app.analytic.getPermissionStatus(config));
+            window.phonegap.app.analytic.logEvent(config, 'startup', 'deviceready');
 
             // load server address
             if (config.address) {
@@ -125,6 +137,18 @@ function pulsingMessage( msg ) {
     $('.visor').addClass('pulse');
 }
 
+function alternatingPulsingMessage( msg1, msg2 ) {
+    return setInterval(function() {
+        var currentMsg = $('.visor label').text();
+        newMsg = (currentMsg === msg1.toUpperCase()) ? msg2 : msg1;
+        pulsingMessage(newMsg);
+    }, 1500);
+}
+
+function clearAlternatingPulsingMessage(timer) {
+    clearInterval(timer);
+}
+
 /*---------------------------------------------------
     UI - Form
 ---------------------------------------------------*/
@@ -141,7 +165,12 @@ function buildSubmit() {
 }
 
 function onBuildSubmitSuccess() {
-    updateMessage( 'Downloading...' );
+    var msgTimer = alternatingPulsingMessage( 'Downloading...', 'Tap to cancel' );
+    listenForCancel();
+
+    // variables to ensure we only send one unique analytic event
+    var analyticDownloadToggle = false;
+    var analyticExtractToggle = false;
 
     // update config data
     config.URL = document.URL;
@@ -152,16 +181,31 @@ function onBuildSubmitSuccess() {
         window.plugins.insomnia.keepAwake();
 
         setTimeout( function() {
+            window.phonegap.app.analytic.logEvent(config, 'connection', 'submit');
             window.phonegap.app.downloadZip({
                 address: getAddress(),
                 onProgress: function(data) {
-                    if(data.status === 2) {
+                    if(data.status === 1) {
+                        if(!analyticDownloadToggle) {
+                            window.phonegap.app.analytic.logEvent(config, 'connection', 'download');
+                            analyticDownloadToggle = true;
+                        }
+                    } else if(data.status === 2) {
+                        if(!analyticExtractToggle) {
+                            window.phonegap.app.analytic.logEvent(config, 'connection', 'extract');
+                            analyticExtractToggle = true;
+                        }
+
+                        clearAlternatingPulsingMessage(msgTimer);
                         updateMessage('Extracting...');
-                    }else if(data.status === 3) {
+                    } else if(data.status === 3) {
+                        window.phonegap.app.analytic.logEvent(config, 'connection', 'success');
+                        clearAlternatingPulsingMessage(msgTimer);
                         updateMessage('Success!');
                     }
                 },
                 onDownloadError: function(e) {
+                    clearAlternatingPulsingMessage(msgTimer);
                     onBuildSubmitError('Download Error!');
                     var errorString = 'Unable to download archive from the server.\n\n';
                     if(e)
@@ -171,14 +215,17 @@ function onBuildSubmitSuccess() {
 
                         if(e === 1)
                         {
+                            window.phonegap.app.analytic.logEvent(config, 'connection', 'failure', 'invalid url');
                             errorString += 'Please enter a valid url to connect to.';
                         }
                         else if(e === 2)
                         {
+                            window.phonegap.app.analytic.logEvent(config, 'connection', 'failure', 'unable to connect');
                             errorString += 'Unable to properly connect to the server.';
                         }
                         else if(e === 3)
                         {
+                            window.phonegap.app.analytic.logEvent(config, 'connection', 'failure', 'unable to unzip');
                             errorString += 'Unable to properly unzip the archive.';
                         }
                     }
@@ -189,6 +236,11 @@ function onBuildSubmitSuccess() {
                             function() {}
                         );
                     }, 4000);
+                },
+                onCancel: function(e) {
+                    window.phonegap.app.analytic.logEvent(config, 'connection', 'canceled');
+                    clearAlternatingPulsingMessage(msgTimer);
+                    onUserCancel();
                 }
             });
         }, 1000 );
@@ -197,6 +249,7 @@ function onBuildSubmitSuccess() {
 
 function onBuildSubmitError(message) {
     errorMessage('Error!');
+    removeListenerForCancel();
     setTimeout(function() {
         message = message || 'Timed out!';
         errorMessage(message);
@@ -207,6 +260,30 @@ function onBuildSubmitError(message) {
         updateMessage('');
         openBot();
     }, 3500);
+}
+
+function listenForCancel(onCancel) {
+    removeListenerForCancel(); // make sure we aren't multiple-binding
+    $('#bot').on('touchend', function(e) {
+        console.log('triggering...');
+        $(document).trigger('cancelSync');
+    });
+}
+
+function removeListenerForCancel() {
+    $('#bot').off('touchend');
+}
+
+function onUserCancel() {
+    var message = 'Cancelled';
+    removeListenerForCancel();
+    errorMessage(message);
+
+    setTimeout(function() {
+        $('.monitor').removeClass('alert');
+        updateMessage('');
+        openBot();
+    }, 500);
 }
 
 function getAddressField() {
@@ -255,5 +332,4 @@ function supportBrowserQuirks() {
         document.body.appendChild(element);
     }
 }
-
 })();
